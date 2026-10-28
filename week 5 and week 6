@@ -1,0 +1,225 @@
+
+# ==========================================================
+# LINEAR ALGEBRA + CALCULUS FOR AI/ML
+# Google Colab - Complete One-Shot Code
+# ==========================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+print("=" * 60)
+print("LINEAR ALGEBRA AND CALCULUS FOR AI/ML")
+print("=" * 60)
+
+
+# ==========================================================
+# 1. LINEAR ALGEBRA: VECTORS
+# ==========================================================
+
+print("\n1. VECTORS")
+
+v1 = np.array([2, 3])
+v2 = np.array([4, 5])
+
+print("Vector 1:", v1)
+print("Vector 2:", v2)
+print("Vector Addition:", v1 + v2)
+print("Vector Subtraction:", v1 - v2)
+print("Scalar Multiplication:", 2 * v1)
+print("Magnitude of Vector 1:", np.linalg.norm(v1))
+
+# Dot Product
+print("Dot Product:", np.dot(v1, v2))
+
+
+# ==========================================================
+# 2. MATRICES
+# ==========================================================
+
+print("\n2. MATRICES")
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+
+print("Matrix A:\n", A)
+print("Matrix B:\n", B)
+print("Matrix Addition:\n", A + B)
+print("Matrix Subtraction:\n", A - B)
+print("Element-wise Multiplication:\n", A * B)
+print("Matrix Multiplication:\n", A @ B)
+print("Transpose of A:\n", A.T)
+print("Determinant of A:", np.linalg.det(A))
+print("Inverse of A:\n", np.linalg.inv(A))
+
+
+# ==========================================================
+# 3. EIGENVALUES AND EIGENVECTORS
+# ==========================================================
+
+print("\n3. EIGENVALUES AND EIGENVECTORS")
+
+M = np.array([[4, 1], [2, 3]])
+
+eigenvalues, eigenvectors = np.linalg.eig(M)
+
+print("Matrix:\n", M)
+print("Eigenvalues:", eigenvalues)
+print("Eigenvectors:\n", eigenvectors)
+
+# Intuition:
+# Eigenvectors are special directions that a matrix transformation
+# does not rotate away from their line.
+# Eigenvalues tell us how much those directions are scaled.
+
+
+# ==========================================================
+# 4. CALCULUS: DERIVATIVES
+# ==========================================================
+
+print("\n4. DERIVATIVES")
+
+# Function: f(x) = x^2
+def f(x):
+    return x**2
+
+# Analytical derivative: f'(x) = 2x
+def derivative(x):
+    return 2*x
+
+x = 3
+
+print("Function f(x) = x^2")
+print("f(3) =", f(x))
+print("Derivative at x=3 =", derivative(x))
+
+# Numerical derivative using finite differences
+h = 0.000001
+numerical_derivative = (f(x + h) - f(x)) / h
+
+print("Numerical Derivative:", numerical_derivative)
+
+
+# ==========================================================
+# 5. GRADIENTS
+# ==========================================================
+
+print("\n5. GRADIENTS")
+
+# Function: f(x, y) = x^2 + y^2
+def function(x, y):
+    return x**2 + y**2
+
+# Gradient = [df/dx, df/dy] = [2x, 2y]
+def gradient(x, y):
+    return np.array([2*x, 2*y])
+
+x, y = 3, 4
+
+print("Function Value:", function(x, y))
+print("Gradient:", gradient(x, y))
+
+# Gradient points in the direction of steepest increase.
+# To reduce a loss, move in the opposite direction.
+
+
+# ==========================================================
+# 6. CHAIN RULE
+# ==========================================================
+
+print("\n6. CHAIN RULE")
+
+# Let y = (3x + 2)^2
+# Inner function: u = 3x + 2
+# Outer function: y = u^2
+# dy/dx = dy/du * du/dx = 2u * 3
+
+def chain_function(x):
+    return (3*x + 2)**2
+
+def chain_derivative(x):
+    return 6*(3*x + 2)
+
+x = 2
+
+print("Function Value:", chain_function(x))
+print("Chain Rule Derivative:", chain_derivative(x))
+
+# Chain rule is used in neural network backpropagation
+# to calculate how each parameter affects the final loss.
+
+
+# ==========================================================
+# 7. GRADIENT DESCENT
+# ==========================================================
+
+print("\n7. GRADIENT DESCENT")
+
+# Goal: minimize f(x) = x^2
+# Derivative: f'(x) = 2x
+
+x = 10.0
+learning_rate = 0.1
+iterations = 20
+
+history = []
+
+for i in range(iterations):
+    loss = x**2
+    grad = 2*x
+    history.append(loss)
+
+    # Update parameter in the opposite direction of the gradient
+    x = x - learning_rate * grad
+
+    print(f"Iteration {i+1}: Loss={loss:.6f}, x={x:.6f}")
+
+print("Final x:", x)
+print("Final Loss:", x**2)
+
+
+# ==========================================================
+# 8. VISUALIZATION OF A DERIVATIVE
+# ==========================================================
+
+print("\n8. DERIVATIVE GRAPH")
+
+x_values = np.linspace(-10, 10, 200)
+y_values = x_values**2
+derivative_values = 2*x_values
+
+plt.figure(figsize=(9, 4))
+plt.plot(x_values, y_values, label="f(x) = x²")
+plt.plot(x_values, derivative_values, label="f'(x) = 2x")
+plt.title("Function and Its Derivative")
+plt.xlabel("x")
+plt.ylabel("Value")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+# ==========================================================
+# 9. GRADIENT DESCENT LOSS GRAPH
+# ==========================================================
+
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, iterations + 1), history, marker="o")
+plt.title("Gradient Descent: Loss Reduction")
+plt.xlabel("Iteration")
+plt.ylabel("Loss")
+plt.grid(True)
+plt.show()
+
+
+# ==========================================================
+# 10. FINAL SUMMARY
+# ==========================================================
+
+print("\n" + "=" * 60)
+print("ALL TOPICS COMPLETED SUCCESSFULLY!")
+print("=" * 60)
+print("Linear Algebra: Vectors, Matrices, Dot Product")
+print("Eigenvalues and Eigenvectors")
+print("Calculus: Derivatives, Gradients, Chain Rule")
+print("AI/ML: Gradient Descent and Loss Reduction")
+print("=" * 60)
