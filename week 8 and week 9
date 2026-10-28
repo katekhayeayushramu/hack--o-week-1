@@ -1,0 +1,282 @@
+
+# ================================================================
+# MACHINE LEARNING: MODEL EVALUATION + FEATURE ENGINEERING
+# Complete One-Shot Code for Google Colab
+# ================================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    confusion_matrix, accuracy_score, precision_score,
+    recall_score, f1_score, roc_auc_score, roc_curve,
+    classification_report
+)
+
+print("=" * 65)
+print("MODEL EVALUATION AND FEATURE ENGINEERING")
+print("=" * 65)
+
+
+# ================================================================
+# 1. CREATE SAMPLE DATASET
+# ================================================================
+
+np.random.seed(42)
+
+df = pd.DataFrame({
+    "Age": [22, 25, 30, 35, np.nan, 28, 40, 45, 32, 26,
+            50, 29, 38, 24, 42, 31, 27, 36, 48, 33],
+    "Salary": [20000, 25000, 40000, 50000, 45000, np.nan,
+               70000, 80000, 42000, 30000, 90000, 38000,
+               65000, 22000, 75000, 48000, 32000, 60000,
+               85000, 52000],
+    "Experience": [1, 2, 5, 8, 6, 3, 12, 15, 6, 3,
+                   20, 4, 10, 1, 14, 7, 2, 9, 18, 8],
+    "Department": ["IT", "HR", "IT", "Finance", "HR",
+                   "IT", "Finance", "IT", "HR", "IT",
+                   "Finance", "HR", "IT", "HR", "Finance",
+                   "IT", "HR", "Finance", "IT", "Finance"],
+    "Purchased": [0, 0, 1, 1, 1, 0, 1, 1, 0, 0,
+                  1, 0, 1, 0, 1, 1, 0, 1, 1, 1]
+})
+
+print("\nOriginal Dataset:")
+print(df)
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+
+# ================================================================
+# 2. FEATURE ENGINEERING
+# ================================================================
+
+print("\n========== FEATURE ENGINEERING ==========")
+
+# Create a new feature from existing features
+df["Salary_Per_Experience"] = (
+    df["Salary"] / df["Experience"].replace(0, np.nan)
+)
+
+# Create an age group feature
+df["Age_Group"] = pd.cut(
+    df["Age"],
+    bins=[0, 25, 35, 100],
+    labels=["Young", "Adult", "Senior"]
+)
+
+print("\nDataset After Creating New Features:")
+print(df.head())
+
+
+# ================================================================
+# 3. TRAIN / TEST SPLIT
+# ================================================================
+
+print("\n========== TRAIN / TEST SPLIT ==========")
+
+X = df.drop(columns=["Purchased", "Age_Group"])
+y = df["Purchased"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y
+)
+
+print("Training samples:", len(X_train))
+print("Testing samples:", len(X_test))
+
+
+# ================================================================
+# 4. HANDLE MISSING DATA + ENCODING + SCALING
+# ================================================================
+
+print("\n========== DATA PREPROCESSING ==========")
+
+numeric_features = X.select_dtypes(include=np.number).columns.tolist()
+categorical_features = X.select_dtypes(exclude=np.number).columns.tolist()
+
+# Numeric columns: fill missing values with median and standardize
+numeric_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler())
+])
+
+# Categorical columns: fill missing values and one-hot encode
+categorical_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OneHotEncoder(handle_unknown="ignore"))
+])
+
+preprocessor = ColumnTransformer([
+    ("numeric", numeric_pipeline, numeric_features),
+    ("categorical", categorical_pipeline, categorical_features)
+])
+
+# Put preprocessing inside a pipeline to prevent data leakage
+model = Pipeline([
+    ("preprocessing", preprocessor),
+    ("classifier", LogisticRegression(max_iter=1000))
+])
+
+print("Numeric features:", numeric_features)
+print("Categorical features:", categorical_features)
+print("Missing values will be imputed.")
+print("Numeric data will be standardized.")
+print("Categorical data will be one-hot encoded.")
+
+
+# ================================================================
+# 5. TRAIN MODEL AND MAKE PREDICTIONS
+# ================================================================
+
+print("\n========== MODEL TRAINING ==========")
+
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
+
+print("Actual Values:   ", y_test.to_numpy())
+print("Predicted Values:", y_pred)
+
+
+# ================================================================
+# 6. CONFUSION MATRIX
+# ================================================================
+
+print("\n========== CONFUSION MATRIX ==========")
+
+cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
+
+print(cm)
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(
+    cm, annot=True, fmt="d", cmap="Blues",
+    xticklabels=["Predicted 0", "Predicted 1"],
+    yticklabels=["Actual 0", "Actual 1"]
+)
+plt.title("Confusion Matrix")
+plt.xlabel("Prediction")
+plt.ylabel("Actual")
+plt.show()
+
+
+# ================================================================
+# 7. ACCURACY, PRECISION, RECALL, F1-SCORE
+# ================================================================
+
+print("\n========== CLASSIFICATION METRICS ==========")
+
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, zero_division=0)
+recall = recall_score(y_test, y_pred, zero_division=0)
+f1 = f1_score(y_test, y_pred, zero_division=0)
+
+print("Accuracy :", round(accuracy, 3))
+print("Precision:", round(precision, 3))
+print("Recall   :", round(recall, 3))
+print("F1-Score :", round(f1, 3))
+
+print("\nDetailed Classification Report:")
+print(classification_report(y_test, y_pred, zero_division=0))
+
+
+# ================================================================
+# 8. ROC CURVE AND ROC-AUC
+# ================================================================
+
+print("\n========== ROC CURVE AND ROC-AUC ==========")
+
+auc = roc_auc_score(y_test, y_prob)
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+
+print("ROC-AUC Score:", round(auc, 3))
+
+plt.figure(figsize=(7, 5))
+plt.plot(fpr, tpr, label=f"Logistic Regression (AUC = {auc:.3f})")
+plt.plot([0, 1], [0, 1], linestyle="--", label="Random Classifier")
+plt.title("ROC Curve")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+
+
+# ================================================================
+# 9. CROSS-VALIDATION
+# ================================================================
+
+print("\n========== CROSS-VALIDATION ==========")
+
+cv = StratifiedKFold(
+    n_splits=4,
+    shuffle=True,
+    random_state=42
+)
+
+cv_scores = cross_val_score(
+    model, X, y,
+    cv=cv,
+    scoring="accuracy"
+)
+
+print("Fold Accuracy Scores:", np.round(cv_scores, 3))
+print("Mean CV Accuracy:", round(cv_scores.mean(), 3))
+print("Standard Deviation:", round(cv_scores.std(), 3))
+
+
+# ================================================================
+# 10. STANDARDIZATION VS NORMALIZATION
+# ================================================================
+
+print("\n========== SCALING COMPARISON ==========")
+
+sample = pd.DataFrame({
+    "Age": [20, 30, 40, 50],
+    "Salary": [20000, 40000, 60000, 80000]
+})
+
+standardized = StandardScaler().fit_transform(sample)
+normalized = MinMaxScaler().fit_transform(sample)
+
+print("\nOriginal Data:")
+print(sample)
+
+print("\nStandardized Data (mean approx. 0, std approx. 1):")
+print(pd.DataFrame(standardized, columns=sample.columns).round(3))
+
+print("\nNormalized Data (range 0 to 1):")
+print(pd.DataFrame(normalized, columns=sample.columns).round(3))
+
+
+# ================================================================
+# 11. FINAL SUMMARY
+# ================================================================
+
+print("\n" + "=" * 65)
+print("ALL TOPICS COMPLETED SUCCESSFULLY!")
+print("=" * 65)
+print("1. Train/Test Split")
+print("2. Cross-Validation")
+print("3. Confusion Matrix")
+print("4. Accuracy, Precision, Recall and F1-Score")
+print("5. ROC Curve and ROC-AUC")
+print("6. Feature Engineering")
+print("7. Missing Data Handling")
+print("8. Categorical Encoding")
+print("9. Standardization and Normalization")
+print("=" * 65)
