@@ -1,0 +1,461 @@
+
+# ==============================================================
+# WEEK 15-16: NEURAL NETWORKS AND MODEL DEPLOYMENT
+# 1. Saving models using Pickle and Joblib
+# 2. Perceptrons and activation functions
+# 3. Forward and backward propagation
+# 4. Loss functions
+# 5. Optimizers: SGD and Adam
+# 6. Neural network from scratch using NumPy
+# ==============================================================
+
+import os
+import pickle
+import joblib
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+np.random.seed(42)
+
+# ==============================================================
+# PART 1: MODEL DEPLOYMENT - PICKLE AND JOBLIB
+# ==============================================================
+
+print("=" * 60)
+print("PART 1: MODEL DEPLOYMENT")
+print("=" * 60)
+
+# Create a sample classification dataset
+X, y = make_moons(n_samples=1000, noise=0.20, random_state=42)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42, stratify=y
+)
+
+# Train a standard ML model
+deployment_model = LogisticRegression(max_iter=1000)
+deployment_model.fit(X_train, y_train)
+
+original_predictions = deployment_model.predict(X_test)
+print("Original model accuracy:",
+      accuracy_score(y_test, original_predictions))
+
+# Save model using Pickle
+with open("model.pkl", "wb") as file:
+    pickle.dump(deployment_model, file)
+
+# Load model using Pickle
+with open("model.pkl", "rb") as file:
+    loaded_pickle_model = pickle.load(file)
+
+pickle_predictions = loaded_pickle_model.predict(X_test)
+print("Pickle model accuracy:",
+      accuracy_score(y_test, pickle_predictions))
+
+# Save model using Joblib
+joblib.dump(deployment_model, "model.joblib")
+
+# Load model using Joblib
+loaded_joblib_model = joblib.load("model.joblib")
+
+joblib_predictions = loaded_joblib_model.predict(X_test)
+print("Joblib model accuracy:",
+      accuracy_score(y_test, joblib_predictions))
+
+# Demonstrate inference on a new sample
+new_sample = np.array([[0.5, 0.2]])
+print("Prediction for new sample:",
+      loaded_joblib_model.predict(new_sample)[0])
+
+print("Saved files:", os.path.exists("model.pkl"),
+      os.path.exists("model.joblib"))
+
+# ==============================================================
+# PART 2: PERCEPTRON AND ACTIVATION FUNCTIONS
+# ==============================================================
+
+print("\n" + "=" * 60)
+print("PART 2: PERCEPTRON AND ACTIVATION FUNCTIONS")
+print("=" * 60)
+
+def step_activation(z):
+    return np.where(z >= 0, 1, 0)
+
+def sigmoid(z):
+    z = np.clip(z, -500, 500)
+    return 1 / (1 + np.exp(-z))
+
+def tanh_activation(z):
+    return np.tanh(z)
+
+def relu(z):
+    return np.maximum(0, z)
+
+def leaky_relu(z):
+    return np.where(z > 0, z, 0.01 * z)
+
+def softmax(z):
+    shifted = z - np.max(z, axis=-1, keepdims=True)
+    exp_values = np.exp(shifted)
+    return exp_values / np.sum(exp_values, axis=-1, keepdims=True)
+
+# Perceptron formula: output = activation(X.W + b)
+inputs = np.array([1.0, 2.0, 3.0])
+weights = np.array([0.2, 0.4, 0.1])
+bias = -0.5
+
+z = np.dot(inputs, weights) + bias
+
+print("Inputs:", inputs)
+print("Weights:", weights)
+print("Bias:", bias)
+print("Weighted sum:", z)
+print("Step activation:", step_activation(z))
+print("Sigmoid:", sigmoid(z))
+print("Tanh:", tanh_activation(z))
+print("ReLU:", relu(z))
+print("Leaky ReLU:", leaky_relu(z))
+print("Softmax:", softmax(np.array([1.0, 2.0, 3.0])))
+
+# Plot activation functions
+z_values = np.linspace(-6, 6, 300)
+
+plt.figure(figsize=(10, 6))
+plt.plot(z_values, sigmoid(z_values), label="Sigmoid")
+plt.plot(z_values, tanh_activation(z_values), label="Tanh")
+plt.plot(z_values, relu(z_values), label="ReLU")
+plt.plot(z_values, leaky_relu(z_values), label="Leaky ReLU")
+plt.axhline(0, linewidth=0.7)
+plt.axvline(0, linewidth=0.7)
+plt.title("Common Neural Network Activation Functions")
+plt.xlabel("Input z")
+plt.ylabel("Activation output")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# ==============================================================
+# PART 3: LOSS FUNCTIONS
+# ==============================================================
+
+print("\n" + "=" * 60)
+print("PART 3: LOSS FUNCTIONS")
+print("=" * 60)
+
+def mean_squared_error(y_true, y_pred):
+    return np.mean((y_true - y_pred) ** 2)
+
+def binary_cross_entropy(y_true, y_pred):
+    eps = 1e-12
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    return -np.mean(
+        y_true * np.log(y_pred) +
+        (1 - y_true) * np.log(1 - y_pred)
+    )
+
+def categorical_cross_entropy(y_true, y_pred):
+    eps = 1e-12
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+y_true = np.array([1, 0, 1, 1, 0])
+y_pred = np.array([0.9, 0.2, 0.8, 0.7, 0.1])
+
+print("Mean Squared Error:",
+      mean_squared_error(y_true, y_pred))
+print("Binary Cross-Entropy:",
+      binary_cross_entropy(y_true, y_pred))
+
+y_true_onehot = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+y_pred_prob = np.array([
+    [0.8, 0.1, 0.1],
+    [0.2, 0.7, 0.1],
+    [0.1, 0.2, 0.7]
+])
+
+print("Categorical Cross-Entropy:",
+      categorical_cross_entropy(y_true_onehot, y_pred_prob))
+
+# ==============================================================
+# PART 4: STOCHASTIC GRADIENT DESCENT (SGD) AND ADAM
+# ==============================================================
+
+print("\n" + "=" * 60)
+print("PART 4: OPTIMIZERS - SGD AND ADAM")
+print("=" * 60)
+
+# Minimize f(w) = (w - 3)^2
+# Gradient = 2 * (w - 3)
+
+def optimize_sgd(initial_w, learning_rate=0.1, steps=50):
+    w = initial_w
+    history = []
+
+    for _ in range(steps):
+        gradient = 2 * (w - 3)
+        w = w - learning_rate * gradient
+        history.append((w - 3) ** 2)
+
+    return w, history
+
+def optimize_adam(initial_w, learning_rate=0.1, steps=50):
+    w = initial_w
+    m = 0.0
+    v = 0.0
+    beta1 = 0.9
+    beta2 = 0.999
+    epsilon = 1e-8
+    history = []
+
+    for t in range(1, steps + 1):
+        gradient = 2 * (w - 3)
+
+        m = beta1 * m + (1 - beta1) * gradient
+        v = beta2 * v + (1 - beta2) * gradient**2
+
+        m_hat = m / (1 - beta1**t)
+        v_hat = v / (1 - beta2**t)
+
+        w = w - learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
+        history.append((w - 3) ** 2)
+
+    return w, history
+
+sgd_final, sgd_history = optimize_sgd(0.0)
+adam_final, adam_history = optimize_adam(0.0)
+
+print("SGD final parameter:", round(sgd_final, 6))
+print("Adam final parameter:", round(adam_final, 6))
+print("Target parameter: 3.0")
+
+plt.figure(figsize=(9, 5))
+plt.plot(sgd_history, label="SGD")
+plt.plot(adam_history, label="Adam")
+plt.xlabel("Optimization step")
+plt.ylabel("Squared error")
+plt.title("SGD vs Adam")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+# ==============================================================
+# PART 5: NEURAL NETWORK FROM SCRATCH USING NUMPY
+# Binary classification with one hidden layer
+# Architecture: 2 inputs -> 16 hidden neurons -> 1 output
+# ==============================================================
+
+print("\n" + "=" * 60)
+print("PART 5: NEURAL NETWORK FROM SCRATCH")
+print("=" * 60)
+
+# Standardize the input data
+scaler = StandardScaler()
+X_train_nn = scaler.fit_transform(X_train)
+X_test_nn = scaler.transform(X_test)
+
+# Convert data into column vectors
+X_train_nn = X_train_nn.T
+X_test_nn = X_test_nn.T
+Y_train_nn = y_train.reshape(1, -1)
+Y_test_nn = y_test.reshape(1, -1)
+
+n_inputs = X_train_nn.shape[0]
+n_hidden = 16
+n_outputs = 1
+
+# Initialize weights and biases
+W1 = np.random.randn(n_hidden, n_inputs) * np.sqrt(2 / n_inputs)
+b1 = np.zeros((n_hidden, 1))
+
+W2 = np.random.randn(n_outputs, n_hidden) * np.sqrt(2 / n_hidden)
+b2 = np.zeros((n_outputs, 1))
+
+# Training settings
+learning_rate = 0.01
+epochs = 3000
+m = X_train_nn.shape[1]
+
+loss_history = []
+accuracy_history = []
+
+# Adam optimizer state
+beta1 = 0.9
+beta2 = 0.999
+epsilon = 1e-8
+
+parameters = {"W1": W1, "b1": b1, "W2": W2, "b2": b2}
+first_moment = {k: np.zeros_like(v) for k, v in parameters.items()}
+second_moment = {k: np.zeros_like(v) for k, v in parameters.items()}
+
+# Forward propagation, loss, backward propagation, and Adam updates
+for epoch in range(1, epochs + 1):
+
+    # FORWARD PROPAGATION
+    Z1 = W1 @ X_train_nn + b1
+    A1 = np.maximum(0, Z1)          # ReLU hidden layer
+
+    Z2 = W2 @ A1 + b2
+    A2 = sigmoid(Z2)                # Sigmoid output layer
+
+    # Binary cross-entropy loss
+    loss = -np.mean(
+        Y_train_nn * np.log(A2 + epsilon) +
+        (1 - Y_train_nn) * np.log(1 - A2 + epsilon)
+    )
+
+    # BACKWARD PROPAGATION
+    dZ2 = A2 - Y_train_nn
+    dW2 = (dZ2 @ A1.T) / m
+    db2 = np.sum(dZ2, axis=1, keepdims=True) / m
+
+    dA1 = W2.T @ dZ2
+    dZ1 = dA1 * (Z1 > 0)
+    dW1 = (dZ1 @ X_train_nn.T) / m
+    db1 = np.sum(dZ1, axis=1, keepdims=True) / m
+
+    gradients = {"W1": dW1, "b1": db1, "W2": dW2, "b2": db2}
+
+    # ADAM OPTIMIZER
+    for key in parameters:
+        first_moment[key] = (
+            beta1 * first_moment[key] +
+            (1 - beta1) * gradients[key]
+        )
+        second_moment[key] = (
+            beta2 * second_moment[key] +
+            (1 - beta2) * gradients[key]**2
+        )
+
+        m_hat = first_moment[key] / (1 - beta1**epoch)
+        v_hat = second_moment[key] / (1 - beta2**epoch)
+
+        parameters[key] -= (
+            learning_rate * m_hat /
+            (np.sqrt(v_hat) + epsilon)
+        )
+
+    # Record loss and accuracy
+    if epoch % 100 == 0:
+        loss_history.append(loss)
+        train_predictions = (A2 >= 0.5).astype(int)
+        train_accuracy = np.mean(train_predictions == Y_train_nn)
+        accuracy_history.append(train_accuracy)
+
+        if epoch % 500 == 0:
+            print(
+                f"Epoch {epoch:4d} | "
+                f"Loss: {loss:.4f} | "
+                f"Training accuracy: {train_accuracy:.4f}"
+            )
+
+# Evaluate trained neural network
+Z1_test = W1 @ X_test_nn + b1
+A1_test = np.maximum(0, Z1_test)
+Z2_test = W2 @ A1_test + b2
+A2_test = sigmoid(Z2_test)
+
+nn_predictions = (A2_test >= 0.5).astype(int).flatten()
+
+print("\nNeural Network Test Accuracy:",
+      accuracy_score(y_test, nn_predictions))
+print("\nNeural Network Classification Report:")
+print(classification_report(y_test, nn_predictions, zero_division=0))
+
+# Plot training loss
+plt.figure(figsize=(9, 5))
+plt.plot(np.arange(100, epochs + 1, 100), loss_history)
+plt.xlabel("Epoch")
+plt.ylabel("Binary Cross-Entropy Loss")
+plt.title("Neural Network Training Loss")
+plt.grid(True)
+plt.show()
+
+# ==============================================================
+# PART 6: SAVE THE NUMPY NEURAL NETWORK
+# ==============================================================
+
+# Save weights, biases, and input scaler together
+nn_model = {
+    "W1": W1,
+    "b1": b1,
+    "W2": W2,
+    "b2": b2,
+    "scaler_mean": scaler.mean_,
+    "scaler_scale": scaler.scale_
+}
+
+joblib.dump(nn_model, "numpy_neural_network.joblib")
+print("Neural network saved as numpy_neural_network.joblib")
+
+# Reload the neural network
+loaded_nn = joblib.load("numpy_neural_network.joblib")
+
+# Predict one new sample using the saved parameters
+sample = np.array([[0.5, 0.2]])
+sample_scaled = (
+    sample - loaded_nn["scaler_mean"]
+) / loaded_nn["scaler_scale"]
+
+sample_scaled = sample_scaled.T
+hidden = np.maximum(
+    0, loaded_nn["W1"] @ sample_scaled + loaded_nn["b1"]
+)
+output = sigmoid(
+    loaded_nn["W2"] @ hidden + loaded_nn["b2"]
+)
+
+print("Saved neural network probability:", float(output[0, 0]))
+print("Saved neural network class:", int(output[0, 0] >= 0.5))
+
+print("\nALL TOPICS COMPLETED SUCCESSFULLY!")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
