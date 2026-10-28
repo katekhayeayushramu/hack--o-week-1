@@ -1,0 +1,175 @@
+
+# ==========================================================
+# COMPLETE PYTHON DATA SCIENCE CODE - GOOGLE COLAB
+# Python + NumPy + Pandas + Matplotlib + Seaborn
+# ==========================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+print("\n========== 1. PYTHON ESSENTIALS ==========")
+
+# Functions
+def average(numbers):
+    return sum(numbers) / len(numbers)
+
+# OOP: Class and Object
+class Student:
+    def __init__(self, name, marks):
+        self.name = name
+        self.marks = marks
+
+    def display(self):
+        print(self.name, "Average:", average(self.marks))
+
+s1 = Student("Ayush", [80, 90, 85])
+s1.display()
+
+# List and Dictionary Comprehensions
+numbers = [1, 2, 3, 4, 5, 6]
+print("Squares:", [n**2 for n in numbers])
+print("Even Numbers:", [n for n in numbers if n % 2 == 0])
+print("Dictionary:", {n: n**2 for n in numbers})
+
+
+print("\n========== 2. NUMPY ==========")
+
+arr = np.array([10, 20, 30, 40, 50])
+print("Array:", arr)
+print("2D Array:\n", np.array([[1, 2, 3], [4, 5, 6]]))
+print("Mean:", np.mean(arr))
+print("Sum:", np.sum(arr))
+print("Maximum:", np.max(arr))
+print("Array + 5:", arr + 5)            # Broadcasting
+print("Array * 2:", arr * 2)            # Vectorization
+print("Array + another:", arr + np.array([1, 2, 3, 4, 5]))
+print("Filter > 25:", arr[arr > 25])
+
+
+print("\n========== 3. PANDAS ==========")
+
+df = pd.DataFrame({
+    "Name": ["Amit", "Neha", "Rahul", "Priya", "Karan", "Karan"],
+    "Department": ["CSE", "IT", "CSE", "IT", "CSE", "CSE"],
+    "Marks": [85, 90, np.nan, 75, 95, 95],
+    "Age": [20, 21, 20, 22, 21, 21]
+})
+
+print("\nOriginal DataFrame:\n", df)
+print("\nFirst Rows:\n", df.head())
+print("\nStatistics:\n", df.describe())
+print("\nMissing Values:\n", df.isnull().sum())
+
+# Data Cleaning
+df["Marks"] = df["Marks"].fillna(df["Marks"].mean())
+df = df.drop_duplicates()
+print("\nCleaned Data:\n", df)
+
+# Filtering
+print("\nMarks Above 80:\n", df[df["Marks"] > 80])
+
+# GroupBy
+print("\nDepartment Average:\n",
+      df.groupby("Department")["Marks"].mean())
+
+# Merging
+details = pd.DataFrame({
+    "Name": ["Amit", "Neha", "Rahul", "Priya", "Karan"],
+    "City": ["Nagpur", "Pune", "Mumbai", "Delhi", "Nagpur"]
+})
+
+merged = pd.merge(df, details, on="Name", how="left")
+print("\nMerged Data:\n", merged)
+
+# Save CSV
+df.to_csv("students.csv", index=False)
+print("\nCSV saved successfully!")
+
+
+print("\n========== 4. MATPLOTLIB ==========")
+
+names = ["Amit", "Neha", "Rahul", "Priya", "Karan"]
+marks = [85, 90, 78, 75, 95]
+hours = [2, 4, 3, 2, 5]
+
+# Bar Chart
+plt.figure(figsize=(6, 3))
+plt.bar(names, marks)
+plt.title("Student Marks - Bar Chart")
+plt.xlabel("Students")
+plt.ylabel("Marks")
+plt.show()
+
+# Line Chart
+plt.figure(figsize=(6, 3))
+plt.plot(names, marks, marker="o")
+plt.title("Student Marks - Line Chart")
+plt.show()
+
+# Scatter Plot
+plt.figure(figsize=(6, 3))
+plt.scatter(hours, marks)
+plt.title("Study Hours vs Marks")
+plt.xlabel("Study Hours")
+plt.ylabel("Marks")
+plt.show()
+
+# Histogram
+plt.figure(figsize=(6, 3))
+plt.hist(marks, bins=5, edgecolor="black")
+plt.title("Marks Distribution")
+plt.show()
+
+# Pie Chart
+plt.figure(figsize=(5, 5))
+plt.pie(marks, labels=names, autopct="%1.1f%%")
+plt.title("Student Marks")
+plt.show()
+
+
+print("\n========== 5. SEABORN ==========")
+
+sns.set_theme(style="whitegrid")
+
+data = pd.DataFrame({
+    "Name": names,
+    "Marks": marks,
+    "Hours": hours,
+    "Department": ["CSE", "IT", "CSE", "IT", "CSE"]
+})
+
+# Bar Plot
+plt.figure(figsize=(6, 3))
+sns.barplot(data=data, x="Name", y="Marks")
+plt.title("Seaborn Bar Plot")
+plt.show()
+
+# Box Plot
+plt.figure(figsize=(6, 3))
+sns.boxplot(data=data, x="Department", y="Marks")
+plt.title("Marks by Department")
+plt.show()
+
+# Regression Plot
+plt.figure(figsize=(6, 3))
+sns.regplot(data=data, x="Hours", y="Marks")
+plt.title("Study Hours vs Marks")
+plt.show()
+
+# Correlation Heatmap
+plt.figure(figsize=(5, 3))
+sns.heatmap(data[["Marks", "Hours"]].corr(),
+            annot=True, cmap="coolwarm", vmin=-1, vmax=1)
+plt.title("Correlation Heatmap")
+plt.show()
+
+# Pair Plot
+sns.pairplot(data, vars=["Marks", "Hours"], hue="Department")
+plt.show()
+
+print("\n========================================")
+print("ALL TOPICS COMPLETED SUCCESSFULLY!")
+print("Python + NumPy + Pandas + Matplotlib + Seaborn")
+print("========================================")
